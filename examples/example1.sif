@@ -1,0 +1,7 @@
+
+
+
+@impure(Char[] -> Void) main;
+main := (args) -> @print("Hello World")
+             then @print("Ola!")
+             then @print("Hey!"); 
