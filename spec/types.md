@@ -9,15 +9,10 @@ SIFLANG types should be conventionally written in PascalCase.
 `Float` - 32 bits. \
 `Char` - 8 bits. \
 `Bool` - 8 bits \
-`Void`
 
 ### Arrays 
 
-`T[]` is a valid array type where `T` is any type. You can get the length of the array using `array.len`.
-
-## Custom Types
-
-You can define custom types using `type` followed by a variable, and assignment.
+`T[]` is a valid array type where `T` is any type. You can get the length of the array using `@len(array)`.
 
 ### Singleton Types
 
@@ -37,19 +32,26 @@ Similar to Java records with immutable members, object types can be defined with
 
 For example, 
 
+```
+type Student := {
+  Int uid,
+  Char[] name
+}
+```
+
 ### Alternate Types
 
-Similar to Haskell, we can also alternate between subtypes to form a type. This is done using the following syntax: `type Type := T1 | T2 | ... | Tn`, where `T1` to `Tn` are subtypes. For example:
+Similar to Haskell, we can also alternate between subtypes to form a type. This is done using the following syntax: `type Type := $d1 T1 | $d2 T2 | ... | $dn Tn`, where `T1` to `Tn` are subtypes, and `$d1, ..., $dn` are data constructors. For example:
 
 ```
-type BST := $emptyTree | {
+type BST := $empty | $rec {
     Int val,
     BST left,
     BST right
 };
 ```
 
-Note that data constructors are written in camelCase.
+In each case, we can also have a single data constructor. 
 
 ## Functions 
 
@@ -85,6 +87,28 @@ Int -> Int -> Int -> Bool areEqual;
 
 These two types **are not equal**. 
 
+### Functions with no inputs or outputs
+
+Note that functions can have zero or more inputs and zero or more outputs. Simply leave the parameter list or return type empty. For example, here is a function with no return value.
+
+```
+Int -> consumer;
+```
+
+Here is a function with no input.
+
+```
+-> Int producer;
+```
+
+We can also have functions with no input or outputs. 
+
+```
+-> doNothing;
+```
+
+Functions with no inputs are known as producers, functions with no outputs are known as consumers, and functions without both are called trivial functions. In a purely functional setting, it may seem strange why we should allow this. However, when functions have side effects, i.e. when being marked as `@impure`, these functions can be very helpful. 
+
 ### Applying Functions
 
 Applying functions has C-style syntaxes. 
@@ -98,10 +122,10 @@ add := (n) -> n + 2;
 
 Let's say we have a function `add` with type `(Int, Int) -> Int`. We can produce `addTwo` by setting `addTwo := (n) -> add(n, 2);`. More succinctly, a notational sugar for this pattern is 
 ```
-addTwo := add(@, 2); 
+addTwo := add(., 2); 
 ```
 
-Where the sequence of `@`'s denotes the function inputs in order. Here, `addTwo` has type `Int -> Int`.
+Where the sequence of `.`'s denotes the function inputs in order. Here, `addTwo` has type `Int -> Int`.
 
 ### Casting Types
 
@@ -111,27 +135,3 @@ Any primitive type can be casted to another primitive type, this is done interna
 Long, Int -> Long mult;
 mult := (l, i) -> l * (Long) i; 
 ```
-
-## Functions with No Inputs
-
-Functions do not need to have any inputs. In fact, functions can have no inputs. 
-
-```
--> Int producer;
-producer = -> 23;
-```
-Here, `producer` is a function that produces a constant `23`.
-
-We can also define something like this
-
-```
-Int -> Int -> Int add;
-add := (a, b) -> a + b;
-
--> Int producer;
-producer := add(2, 3);
-```
-
-This is syntactical sugar for `producer := -> add(2, 3)`, except the number of `@` is 0. 
-
-Producers are particularly useful when chaining impure functions.

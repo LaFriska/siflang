@@ -1,6 +1,7 @@
 # Impure Functions
 
-Impure functions are functions with side effects. In SIFLANG, side effects mainly include I/O operations.
+Impure functions are functions with side effects. In SIFLANG, side effects mainly include I/O operations. Side effects also include things like defining a variable within its scope.
+
 For example, printing a string onto standard out, and taking an input from standard in are impure operations.
 Impure functions may call any type of functions, but pure functions may never call impure functions. Note also
 that SIFLANG's side effects are not meant for programmers to write imperative code, which means mutable variables
@@ -8,12 +9,11 @@ do not exist in SIFLANG.
 
 ## Declaring an Impure Function
 
-To declare an impure function, pass the function type through the `@impure` sifapi call. The best example 
-is the main function:
+To declare an impure function, pass the function type through the `@impure` sifapi call. For example:
 
 ```
-@impure(Char[] ->) main;
-main := string ->; 
+@impure(Char[] ->) printStr;
+printStr := string ->; 
 ```
 Here, the main function takes a string as an input, does nothing, and returns nothing.
 
@@ -24,16 +24,17 @@ Use the `@print` sifapi to print something to standard out, and `@input` for rea
 For example,
 
 ```
-@impure(Char[] ->) main;
-main := string -> @print(string);
+@impure(Char[] ->) printStr;
+printStr := string -> @print(string);
 ```
 
-## Chaining Impure Functions
+## The Purity Rule
 
-Impure functions can be chained, in order to apply their side effects sequentially. This is done using the `,` operator.
-For example,
+The purity rule states that impure operations may call pure and impure operations, but pure operations may only call pure operations. It is also generally bad practice to mark a function impure, when it is actually pure. For example, please don't do this
 
 ```
-@impure(Char[] ->) main;
-main := string -> @print("Your inputs are: "), @print(string), @print("\n");
+
+@impure((Int -> Int) -> Int[]) applyMap;
+applyMap := 
+
 ```
