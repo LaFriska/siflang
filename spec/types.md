@@ -10,10 +10,6 @@ SIFLANG types should be conventionally written in PascalCase.
 `Char` - 8 bits. \
 `Bool` - 8 bits \
 
-### Arrays 
-
-`T[]` is a valid array type where `T` is any type. You can get the length of the array using `@len(array)`.
-
 ### Singleton Types
 
 A singleton type can be defined as just a single data constructor. For example,
@@ -115,9 +111,10 @@ Applying functions has C-style syntaxes.
 
 ```
 Int -> Int addTwo;
-add := (n) -> n + 2;
+addTwo := (n) -> n + 2;
 
-@print(add(5)); //Prints 7.
+Int -> Int addFour;
+addFour := (n) -> addTwo(addTwo(n));
 ```
 
 Let's say we have a function `add` with type `(Int, Int) -> Int`. We can produce `addTwo` by setting `addTwo := (n) -> add(n, 2);`. More succinctly, a notational sugar for this pattern is 

@@ -51,7 +51,7 @@ Given a record type instance, use `.` to get its members. Example:
 ```
 type Student := {
     Int uid,
-    Char[] name
+    Char initial
 }
 
 Student -> Int getUID := (s) -> s.uid;
@@ -64,12 +64,12 @@ Use the `match` keyword with the following syntax to match alternate types.
 
 ```
 match var {
-    $constr1 -> return1,
-    $constr2 -> return2,
+    $constr1 a -> return1,
+    $constr2 b -> return2,
     .
     .
     .
-    $constr3 -> return3
+    $constr3 c -> return3
 }
 ```
 
@@ -88,27 +88,29 @@ max := (a, b) -> a > b ? a : b;
 Tree -> Int height;
 height := (tree) -> match tree {
     $null -> 0,
-    $tree -> 1 + max(height(tree.left), height(tree.right))
+    $tree t -> 1 + max(height(t.left), height(t.right))
 };
 
 ```
 
 ## Comma Operator
 
-Commas are used very often in SIF, including in the match operator. However, the *comma operator* gives us a way to chain impure operations, in order to sequence their side effects, while returning the return value of the final impure function in the chain. The comma operator may also be used on impure SIFAPI calls such as `print`. 
+Commas are used very often in SIF, including in the match operator. However, the *comma operator* gives us a way to chain impure operations, in order to sequence their side effects, while returning the return value of the final impure function in the chain. The comma operator may also be used on impure SIFAPI calls such as `put`. 
 
 ```
-Char[] -> Char[] id;
-id := (s) -> s;
+type String := $emp
+             | $rec {Char char, String substring};
 
-/*
-Reads a line from standard in, reponds back, and return
-the text.
-*/
-@impure(->Char[]) echo;
-echo := () ->
-    @print("Welcome to echo!"),
-    Char[] response := @input(), //recall that := is an impure operation
-    @print(response),
-    id(response)
+@impure(String ->) println;
+println := (s) -> match s {
+    $emp    -> @put('\n'),
+    $rec r  -> @put(r.char), println(r.substring);
+}
+
+String hello := $rec{'h', $rec {'e', $rec {'l', $rec {'l', $rec {'o', $emp}}}}};
+
+println(hello);
+
 ```
+
+(Note that in the real language, `String` will be in the standard library, and you will be able to instantiate `String` with string laterals.)

@@ -9,16 +9,10 @@ SIFAPI is a set of natively supported helper calls used to do things pure functi
 Like functions, calls can either be pure or impure, which means some calls can be called in all contexts, but some cannot. 
 
 ```
-@print(s)
+@put(c)
 ```
 
-Prints a string `s` to standard out, returning nothing. `@print` is impure. 
-
-```
-@input()
-```
-
-Gets a line of text from standard in, returns the text, this call is impure.
+Prints a character `c` to standard out, returning nothing. This call is impure. 
 
 ```
 @impure(funcType)
@@ -28,16 +22,8 @@ With a given function type as an input, returns the same function except marked 
 
 Example usage:
 ```
-@impure(Char[] ->) printToString;
-main := (s) -> @print("Your inputs are: "), @print(s);
+@impure(Char ->) putTwise;
+main := (c) -> @put(c), @put(c), @put('\n');
 ```
 
 This function prints the input string. Note that the comma is an operator used to chain impure functions.
-
-```
-@len(arr)
-```
-
-Returns the length of an array as an integer. 
-
-
