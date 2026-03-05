@@ -1,6 +1,6 @@
 # SIFLANG Types
 
-SIFLANG types should be conventionally written in PascalCase. 
+SIFLANG types are inspired by Haskell types, but note that it is also quite different from the Haskell type system.
 
 ## Primitive Types
 
@@ -8,7 +8,7 @@ SIFLANG types should be conventionally written in PascalCase.
 `Long` - 64 bits. \
 `Float` - 32 bits. \
 `Char` - 8 bits. \
-`Bool` - 8 bits \
+`Bool` - 8 bits
 
 ### Singleton Types
 
@@ -20,9 +20,15 @@ type Nothing := $nothing;
 
 Here, `$nothing` is a data constructor for the type `Nothing`. Every data constructor has a `$` before it.
 
+We can also store a single subtype after a data constructor. 
+
+```
+type UID := $uid Int;
+```
+
 ### Object Types
 
-Similar to Java records with immutable members, object types can be defined with the following syntax.
+To store multiple subtypes, we can define an object.
 
 `type Type = {T1 n1, T2 n2, T3 n3, ..., T4 n4}`
 
@@ -35,7 +41,9 @@ type Student := {
 }
 ```
 
-### Alternate Types
+where `T1, T2, ..., T4` are subtypes and `n1, n2, ..., n4` are names for members holding these types.
+
+### Alternation Types
 
 Similar to Haskell, we can also alternate between subtypes to form a type. This is done using the following syntax: `type Type := $d1 T1 | $d2 T2 | ... | $dn Tn`, where `T1` to `Tn` are subtypes, and `$d1, ..., $dn` are data constructors. For example:
 
@@ -83,6 +91,10 @@ Int -> Int -> Int -> Bool areEqual;
 
 These two types **are not equal**. 
 
+#### When to use currying in SIFLANG?
+
+It is recommended against using currying to denote functions with several inputs. Currying should only be used when the type represents higher order functions (e.g. `Int -> Int -> Int` is a producer of a function `Int -> Int` given an `Int`). 
+
 ### Functions with no inputs or outputs
 
 Note that functions can have zero or more inputs and zero or more outputs. Simply leave the parameter list or return type empty. For example, here is a function with no return value.
@@ -107,7 +119,7 @@ Functions with no inputs are known as producers, functions with no outputs are k
 
 ### Applying Functions
 
-Applying functions has C-style syntaxes. 
+Applying functions has C-style syntaxes. For example,
 
 ```
 Int -> Int addTwo;
