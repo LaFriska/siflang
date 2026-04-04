@@ -1,6 +1,6 @@
 # SIFLANG Standard Library
 
-Unlike many other languages, SIFLang standard library is imported without having to use `import` or other keywords. Since this language is very bare-bones and for educational purposes only, it does not support importing different modules (yet).
+Unlike many other languages, SIFLANG standard library is imported without having to use `import` or other keywords. Since this language is very bare-bones and for educational purposes only, it does not support importing different modules (yet).
 
 Nonetheless, the standard library provides some important functionalities. 
 
