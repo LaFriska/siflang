@@ -1,24 +1,15 @@
-# SIFLANG Types
+# Full SIFLANG Specifications 
+
+## Types
 
 SIFLANG types should be conventionally written in PascalCase. 
 
-## Primitive Types
+### Primitive Types
 
 `Int` - 32 bits. \
 `Long` - 64 bits. \
 `Float` - 32 bits. \
 `Char` - 8 bits. \
-`Bool` - 8 bits \
-
-### Singleton Types
-
-A singleton type can be defined as just a single data constructor. For example,
-
-```
-type Nothing := $nothing;
-```
-
-Here, `$nothing` is a data constructor for the type `Nothing`. Every data constructor has a `$` before it.
 
 ### Object Types
 
@@ -31,13 +22,13 @@ For example,
 ```
 type Student := {
   Int uid,
-  Char[] name
-}
+  Char initial
+};
 ```
 
 ### Alternate Types
 
-Similar to Haskell, we can also alternate between subtypes to form a type. This is done using the following syntax: `type Type := $d1 T1 | $d2 T2 | ... | $dn Tn`, where `T1` to `Tn` are subtypes, and `$d1, ..., $dn` are data constructors. For example:
+Similar to Haskell, we can also alternate between subtypes to form a type. This is done using the following syntax: `type Type := $d1 T1 | $d2 T2 | ... | $dn Tn`, where `T1` to `Tn` are subtypes or nothing, and `$d1, ..., $dn` are data constructors. For example:
 
 ```
 type BST := $empty | $rec {
@@ -51,7 +42,7 @@ In each case, we can also have a single data constructor without a type to follo
 
 ## Functions 
 
-Functions also have types. This is identified by having an arrow `->` between the domain type and codomain type. For example, the function to calculate fibonacci numbers can be declared as follows. 
+Function types have an arrow `->` between the domain type and codomain type. For example, the function to calculate fibonacci numbers can be declared as follows. 
 
 ``` 
 Int -> Int fib;
@@ -117,13 +108,6 @@ Int -> Int addFour;
 addFour := (n) -> addTwo(addTwo(n));
 ```
 
-Let's say we have a function `add` with type `(Int, Int) -> Int`. We can produce `addTwo` by setting `addTwo := (n) -> add(n, 2);`. More succinctly, a notational sugar for this pattern is 
-```
-addTwo := add(., 2); 
-```
-
-Where the sequence of `.`'s denotes the function inputs in order. Here, `addTwo` has type `Int -> Int`.
-
 ### Casting Types
 
 Any primitive type can be casted to another primitive type, this is done internally by simply sign-extending, or truncating bits. C-style syntax can be used to perform the cast. For example, 
@@ -132,3 +116,31 @@ Any primitive type can be casted to another primitive type, this is done interna
 Long, Int -> Long mult;
 mult := (l, i) -> l * (Long) i; 
 ```
+
+## Expressions
+
+Expressions are instances of types, each expression has exactly one type, there are no type-ambiguity in SIFLANG. 
+
+### Variables 
+
+Variables declared are expressions with their assigned type. For example, we say here that `i` has type `Int`.
+
+```
+Int a := 3;
+```
+
+### Numbers 
+
+`Int`s, `Long`s, and `Float`s have different expressions for numbers. In this case, the number expression for `Int`s are a subset of that of `Float`s. 
+
+For integers and longs, we accept digital notation, that is, a sequence of decimal digits. We also accept hexadecimal, which is a sequence of digits followed by `0x`, or binary notation, a sequence of binary digits followed by `0b`. 
+
+For floats, we accept everything accepted for integers, but also we allow a decimal point specifically for the decimal notation. 
+
+### Char Literals
+
+A single character can be defined concretely with a character literal. For example, `Char a := 'a';`. 
+
+### Infix Operations 
+
+Infix operators operate on two type-equivalent sides. 
