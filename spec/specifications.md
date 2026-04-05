@@ -8,9 +8,10 @@ SIFLANG types should be conventionally written in PascalCase.
 
 `Int` - 32 bits. \
 `Long` - 64 bits. \
-`Float` - 32 bits. \
+`Float` - 64 bits. \
 `Char` - 8 bits. \
-`Bool` - 8 bits
+`Bool` - 8 bits. \
+`Void` - 8 bits.
 
 ### Object Types
 
@@ -22,14 +23,14 @@ For example,
 
 ```
 type Student := {
-  Int uid,
+  Int uid;
   Char initial
 };
 ```
 
 ### Alternate Types
 
-Similar to Haskell, we can also alternate between subtypes to form a type. This is done using the following syntax: `type Type := $d1 T1 | $d2 T2 | ... | $dn Tn`, where `T1` to `Tn` are subtypes or nothing, and `$d1, ..., $dn` are data constructors. For example:
+We can also alternate between subtypes to form a type. This is done using the following syntax: `type Type := $d1 T1 | $d2 T2 | ... | $dn Tn`, where `T1` to `Tn` are subtypes or nothing, and `$d1, ..., $dn` are data constructors. For example:
 
 ```
 type BST := $empty | $rec {
@@ -77,25 +78,37 @@ These two types **are not equal**.
 
 ### Functions with no inputs or outputs
 
-Note that functions can have zero or more inputs and zero or more outputs. Simply leave the parameter list or return type empty. For example, here is a function with no return value.
+Note that functions can have zero or more inputs and zero or more outputs. When this is the case, `Void` is implicitly assigned to its domain or codomain. `Void` has exactly one instance, which is `null`. For example, here is a function with no return value.
 
 ```
-Int -> consumer;
+(Int ->) consumer; // The parentheses are optional
+```
+
+This is exactly equivalent to 
+
+```
+Int -> Void consumer;
 ```
 
 Here is a function with no input.
 
 ```
--> Int producer;
+(-> Int) producer;
 ```
 
 We can also have functions with no input or outputs. 
 
 ```
--> doNothing;
+(->) doNothing;
 ```
 
-Functions with no inputs are known as producers, functions with no outputs are known as consumers, and functions without both are called trivial functions. In a purely functional setting, it may seem strange why we should allow this. However, when functions have side effects, i.e. when being marked as `@impure`, these functions can be very helpful. 
+Again, this is equivalent to 
+
+```
+Void -> Void doNothing;
+```
+
+Functions with no inputs are known as producers, functions with no outputs are known as consumers, and functions without both are called null maps. In a purely functional setting, it may seem strange why we should allow this. However, when functions have side effects, i.e. when being marked as `@impure`, these functions can be very helpful. 
 
 ### Applying Functions
 
@@ -118,9 +131,21 @@ Long, Int -> Long mult;
 mult := (l, i) => l * (Long) i; 
 ```
 
+- Casting an `Int a` to `Long l` results in the two's complement representation of `a` being sign-extended to 64-bits to `l`.
+- Casting a `Long l` to `Int a` is potentially unsafe. If the value `l` represents can fit in the 32-bit integer range, then it should be converted to that integer. Otherwise, undefined behaviour. 
+- Casting an `Int` and `Long` to a float is undefined behaviour (this specification leaves it undefined for compiler/interpreter writers to find their own way to make this conversion.)
+- Casting a `Float` to `Int` and `Long` is undefined behaviour. 
+- Casting `Char c` to `Int i` or `Long l` is done by returning `c`
+'s ASCII representation.
+- Casting from `Void` and `Bool` is undefined.
+
 ## Expressions
 
 Expressions are instances of types, each expression has exactly one type, there are no type-ambiguity in SIFLANG. 
+
+### Void Expressions
+
+The only void expression is `null` and any function expressions with return type `null`.
 
 ### Variables 
 
@@ -134,9 +159,11 @@ Int a := 3;
 
 `Int`s, `Long`s, and `Float`s have different expressions for numbers. In this case, the number expression for `Int`s are a subset of that of `Float`s. 
 
-For integers and longs, we accept digital notation, that is, a sequence of decimal digits. We also accept hexadecimal, which is a sequence of digits followed by `0x`, or binary notation, a sequence of binary digits followed by `0b`. 
+For integers and longs, we accept digital notation, that is, a sequence of decimal digits. We also accept hexadecimal, which is a sequence of digits followed by `0x`, or binary notation, a sequence of binary digits followed by `0b`.
 
 For floats, we accept everything accepted for integers, but also we allow a decimal point specifically for the decimal notation. 
+
+Any number expression too large for its assigned type is still assignable, although its behaviour is undefined.
 
 ### Char Literals
 
