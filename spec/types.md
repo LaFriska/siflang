@@ -7,24 +7,7 @@ SIFLANG types are inspired by Haskell types, but note that it is also quite diff
 `Int` - 32 bits. \
 `Long` - 64 bits. \
 `Float` - 32 bits. \
-`Char` - 8 bits. \
-`Bool` - 8 bits
-
-### Singleton Types
-
-A singleton type can be defined as just a single data constructor. For example,
-
-```
-type Nothing := $nothing;
-```
-
-Here, `$nothing` is a data constructor for the type `Nothing`. Every data constructor has a `$` before it.
-
-We can also store a single subtype after a data constructor. 
-
-```
-type UID := $uid Int;
-```
+`Char` - 8 bits.
 
 ### Object Types
 
@@ -90,10 +73,6 @@ Int -> Int -> Int -> Bool areEqual;
 ```
 
 These two types **are not equal**. 
-
-#### When to use currying in SIFLANG?
-
-It is recommended against using currying to denote functions with several inputs. Currying should only be used when the type represents higher order functions (e.g. `Int -> Int -> Int` is a producer of a function `Int -> Int` given an `Int`). 
 
 ### Functions with no inputs or outputs
 
