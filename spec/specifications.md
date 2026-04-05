@@ -235,10 +235,49 @@ For example,
 ```
 corresponds to the function of adding two integers together.
 
+When assigning a function expression to a variable declared with a function type, we can omit the types of formal parameters of the function parameters.
+
+For example, we can rewrite the following
+
+```
+(Int, Int) -> Int add;
+add := (Int a, Int b) => a + b;
+```
+
+with the following.
+
+```
+(Int, Int) -> Int add;
+add := (a, b) => a + b;
+```
+
+This is because we are able to infer the types of `a` and `b` in compile. 
+
 An impure function expression can be determined at compile time, it is an impure function only if it makes an impure call. 
+
+Example:
 
 ```
 () => @put('H'), @put('i'); 
+```
+
+#### Notational sugar for voids 
+
+When returning a `Void` type, we require our function expression to specify the return type as `null`. This is to enforce better code readability. 
+
+Example:
+
+```
+Char -> consumeChar := (c) => null;
+```
+
+However, when accepting a `Void` type, we allow leaving it empty as notational sugar.
+
+For example, the following two functions are equivalent.
+
+```
+(->) doNothing1 := (null) => null;
+(->) doNothing2 := () => null;
 ```
 
 ### Match Expressions 
@@ -252,9 +291,9 @@ type String := $emp
 
 @impure(String ->) print;
 print := (s) => ?s {
-  $emp   : @trivial();
+  $emp   : null;
   $rec o : @put(o.x), print(o.xs);
-}
+};
 
 ```
 
@@ -266,14 +305,10 @@ Here, we use the syntax
   .
   .
   .
-}
+};
 ```
 
-### Comma Expressions 
-
-See the Impure Operations section.
-
-## Impure Operations 
+## Impure Operations and Comma Expressions
 
 Impure functions are functions with side effects. In SIFLANG, side effects mainly include I/O operations. Side effects also include things like defining a variable within its scope.
 
@@ -288,8 +323,17 @@ Sometimes, we want to call several impure functions just for their side effects.
 
 ```
 @impure((Char, Int) -> Int) printAndRet;
-printAndRet := (c, i) => @put(c), @trivial(i)
+printAndRet := (c, i) => @put(c), i;
 ```
+
+Consider the following example.
+
+```
+@impure(->) printHi;
+printHi := () => @put('H'), @put('i'), @put('!');
+```
+
+Here, the function type requires a `Void` instance, which is always `null`, to be returned. Since `@put` calls have type `Char -> Void`, the expression `@put('!')` evaluates to `null`. 
 
 ## SIFAPI
 
@@ -299,13 +343,15 @@ SIFAPI is a set of natively supported helper calls used to do things pure functi
 
 ### SIFAPI List
 
-Like functions, calls can either be pure or impure, which means some calls can be called in all contexts, but some cannot. 
+Some SIFAPIs have a specific function type, and some do not. Those that do are *functional* APIs.
+
+The `@put` functional API has type `@impure(Char ->)`. It prints a character `c` to standard out, returning nothing.
+
+Example usage:
 
 ```
-@put(c)
+@put('A'); // Prints character 'A'
 ```
-
-Prints a character `c` to standard out, returning nothing. This call is impure. 
 
 ```
 @impure(funcType)
