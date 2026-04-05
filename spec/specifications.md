@@ -17,13 +17,13 @@ SIFLANG types should be conventionally written in PascalCase.
 
 Similar to Java records with immutable members, object types can be defined with the following syntax.
 
-`type Type = {T1 n1; T2 n2; T3 n3; ...; T4 n4}`
+`type Type = {T1 n1, T2 n2, T3 n3, ..., T4 n4}`
 
 For example, 
 
 ```
 type Student := {
-  Int uid;
+  Int uid,
   Char initial
 };
 ```
@@ -110,18 +110,6 @@ Void -> Void doNothing;
 
 Functions with no inputs are known as producers, functions with no outputs are known as consumers, and functions without both are called null maps. In a purely functional setting, it may seem strange why we should allow this. However, when functions have side effects, i.e. when being marked as `@impure`, these functions can be very helpful. 
 
-### Applying Functions
-
-Applying functions has C-style syntaxes. 
-
-```
-Int -> Int addTwo;
-addTwo := (n) => n + 2;
-
-Int -> Int addFour;
-addFour := (n) => addTwo(addTwo(n));
-```
-
 ### Casting Types
 
 Any primitive type can be casted to another primitive type, this is done internally by simply sign-extending, or truncating bits. C-style syntax can be used to perform the cast. For example, 
@@ -204,7 +192,7 @@ where the type of `trueExpr` and `falseExpr` are equal, and the type of `boolExp
 
 ### Object Expressions
 
-To define an object, simply write the subexpressions within the curly braces separated by semicolons. 
+To define an object, simply write the subexpressions within the curly braces separated by commas. 
 
 For example,
 ```
@@ -214,15 +202,31 @@ type Student := {
 };
 
 Student joe := {
-  7000 + 300; 
+  7000 + 300,
   'J'
 };
 ```
 
-To get a field of an object, use the **dot expression**.
+To get a field of an object, use the **dot operator**.
 
 ```
 @put(joe.initial); 
+```
+
+### Alternation Expressions
+
+To construct an alternate type, follow a data constructor `$dat` with the constructor of its subtype, or leave it empty if there is no types to follow. 
+
+Refer to the following list type.
+
+```
+type List := $emp | $rec {Int val, List sublist};
+```
+
+We can construct a list containing integers `[1, 2, 3]` as follows.
+
+```
+List list := $rec {1, $rec {2, $rec {3, $emp}}};
 ```
 
 ### Function Expressions 
@@ -231,7 +235,7 @@ A function expression is an instance of a function type. It takes a possibly emp
 
 For example, 
 ```
-(Int a, Int b) => a + b;
+(Int a, Int b) => a + b
 ```
 corresponds to the function of adding two integers together.
 
@@ -259,6 +263,19 @@ Example:
 
 ```
 () => @put('H'), @put('i'); 
+```
+
+
+### Applying Functions
+
+Applying functions has C-style syntaxes. 
+
+```
+Int -> Int addTwo;
+addTwo := (n) => n + 2;
+
+Int -> Int addFour;
+addFour := (n) => addTwo(addTwo(n));
 ```
 
 #### Notational sugar for voids 
@@ -308,6 +325,23 @@ Here, we use the syntax
 };
 ```
 
+### Operators 
+
+The following lists the operators for the above expressions from highest to lowest order of precedence.
+1. Functional Call Operators
+2. Dot Operator
+3. Prefix Operators
+4. Multiplication, Division, Modulo, and Integer Division
+5. Addition, Subtraction
+6. Bitwise Operators
+7. Comparison Operators
+8. Equivalence Operators
+9. Boolean Operators
+10. Conditional Operators
+11. Match Operators
+12. Comma Operators
+13. Function Operators (`=>`)
+
 ## Impure Operations and Comma Expressions
 
 Impure functions are functions with side effects. In SIFLANG, side effects mainly include I/O operations. Side effects also include things like defining a variable within its scope.
@@ -337,9 +371,7 @@ Here, the function type requires a `Void` instance, which is always `null`, to b
 
 ## SIFAPI
 
-SIFAPI is a set of natively supported helper calls used to do things pure functions cannot achieve. These calls solves a range of problems, from retrieving the length of an array in constant time, to handling side effects (I/O). This file documents all SIFAPIs. Note that SIFAPIs may not be pure, as they may produce side effects.
-
-<!-- Note that althought types have been given to SIFAPIs here, these types are only there to guide intuition. SIFAPIs are not technically functions, so having input types and return types do not technically make sense. -->
+SIFAPI is a set of natively supported helper calls used to do things pure functions cannot achieve. These calls solves a range of problems, such as handling side effects (I/O). In general, SIFAPIs can be used as normal functions, using the function call operator. SIFAPI calls are those that begin with a `@`, programmers are not allowed to define their own SIFAPIs. This section documents all SIFAPIs. 
 
 ### SIFAPI List
 
@@ -353,11 +385,13 @@ Example usage:
 @put('A'); // Prints character 'A'
 ```
 
-```
-@impure(funcType)
-```
+The `@impure` API is not function. It takes a function type as input, and returns its impure version. 
 
-With a given function type as an input, returns the same function except marked internally as impure. This call returns the function itself if it is already impure. 
+Example usage:
+
+```
+@impure(String ->) println;
+```
 
 Example usage:
 ```
@@ -365,6 +399,20 @@ Example usage:
 main := (c) => @put(c), @put(c), @put('\n');
 ```
 
-This function prints the input string. Note that the comma is an operator used to chain impure functions.
+The `@get` functional API has type `@impure(-> Char)`, it reads a single character from standard in. If nothing is in standard in, it hangs.
 
-`@trivial()` returns a trivial function that takes any arguments and returns itself. It can also take zero arguments. This can be usedful in chaining impure operations to supply a return value. 
+Example usage:
+```
+@impure(->) charEcho;
+charEcho := () => @put(@get());
+```
+
+The `@string` API is the only function in the language that can take 
+in a string lateral. In particular, it takes a string lateral, and
+returns a `type String := @emp | @rec {Char c, String cs}` type. Note that type-equivalence is structural in SIFLANG, so users may define their own type to store the result of `@string` as long as the structure is identical. 
+
+Example usage:
+```
+type String := @emp | @rec {Char c, String cs};
+String hello = @string("Hello");
+```

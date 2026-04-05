@@ -1,0 +1,11 @@
+type String := $emp 
+             | $rec {Char c, String cs};
+
+@impure((Char, String) -> String) helper;
+helper := (c, s) => c = '\n' 
+                    ? s
+                    : helper(@get(), $rec {c, s});
+                            
+
+@impure(-> String) readline;
+readline := () => helper(@get(), $emp);
