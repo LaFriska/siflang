@@ -1,5 +1,102 @@
 # Full SIFLANG Specifications 
 
+## Comments
+
+A comment starts with `#` and terminates on a new-line. Writing multi-line comments can be done by starting and ending it with three hashtags. 
+
+```
+Int myInt := 123; # My favourite number
+
+###
+This is a curried function.
+I will explain what it does in this multi-line comment.
+It takes three integers and produces a single output integer.
+###
+Int -> Int -> Int -> Int func;
+```
+
+## Blocks
+
+A *block* in SIFLANG is an executable set of declarations and statements with a return type. Each compilation unit is a single block with a `Void` return type. When blocks are nested through functions, the inner block has a lower *scope* than outer blocks. In particular, blocks with a lower scope can reference declared variables from outer scopes, but not the other way around. 
+
+Aside from blocks with a `Void` return type, every other block must have a return statement at the end.
+
+### Pure vs Impure Blocks
+
+We say a block is *impure* if it makes any call statements. This distinction is important when defining *function expressions*.
+
+## Declarations 
+
+A variable is an instance of a type. Types are described further in the next section. Both variables and types can be delcared. 
+
+### Type Declarations 
+
+You can declare a type using the `type` keyword, followed by the name of the type and ended with a semicolon.
+
+```
+type MyType;
+```
+
+### Variable Declarations
+
+You can declare a variable by starting with the type, then the variable name, and a semicolon.
+```
+Int myInt;
+(Int -> Int) myFunction;
+```
+
+## Statements
+
+A statement may either definition of an undeclared variable, a return statement, or executes an impure function with side effects. 
+
+### Assignments
+
+Use the `:=` symbol to assign an undeclared variable to an expression.
+
+```
+Int myInt;
+myInt := 3 + 4;
+```
+
+You may also combine it with the declaration. 
+
+```
+Int myInt := 3 + 4;
+```
+
+You can also assign declared types. For example,
+
+```
+type MyBool;
+MyBool := Bool;
+
+type MyInt := Int;
+```
+
+### Call Statements
+
+A call statement is identical to a function call expression with a semi-colon in the end, where the function must be impure. 
+
+```
+# Assume print is defined somewhere
+print("Hello World!");
+```
+
+Below, a static error is raised since the function is pure.
+
+```
+(Int, Int) -> Int add := (a, b) => a + b;
+add(1,2); # Error
+```
+
+### Return Statements
+
+At the end of each block with a non-`Void` return type, a return statement is needed. Simply have `return` followed by the returning expression that match the block type, and a semicolon in the end.
+
+```
+return <expr>;
+```
+
 ## Types
 
 SIFLANG types should be conventionally written in PascalCase. 
@@ -28,7 +125,7 @@ type Student := {
 };
 ```
 
-### Alternate Types
+### Alternation Types
 
 We can also alternate between subtypes to form a type. This is done using the following syntax: `type Type := $d1 T1 | $d2 T2 | ... | $dn Tn`, where `T1` to `Tn` are subtypes or nothing, and `$d1, ..., $dn` are data constructors. For example:
 
@@ -126,6 +223,77 @@ mult := (l, i) => l * (Long) i;
 - Casting `Char c` to `Int i` or `Long l` is done by returning `c`
 's ASCII representation.
 - Casting from `Void` and `Bool` is undefined.
+
+### Implicit Recursive Type Operator
+
+The dot `.` notation can be used to refer recursively to the type it is used in. For example,
+
+```
+type Nat := $z | $s .; 
+```
+
+The above is equivalent to
+
+```
+type Nat := $z | $s Nat;
+```
+
+We can chain several dots together to refer to more outer types.
+
+```
+type List := $emp | $rec {Int num, ..sublist};
+```
+
+The above is equivalent to
+
+```
+type List := $emp | $rec {Int num, List sublist};
+```
+
+### String Laterals
+
+String laterals are notationally simple way of constructing the type 
+
+```
+$emp | $rec {Char c, ..cs}
+```
+
+
+## Type Equivalence 
+
+This section specifies type-equivalence of SIFLANG. Expressions of type `T` can be assigned to expressions of type `U` as long as `T = U`. 
+
+Any situations that does not match the following description means that the two types are not equal.
+
+### Primitive Type Equivalence 
+
+Primitive types are only equivalent to themselves. 
+
+### Object Type Equivalence 
+
+Object types are equal if they have the same number of members, and each member type are equal, and in the same order.
+
+### Alternation Types
+
+An alternation type `T := $d1 S1 | $d2 S2 | ... | $dn Sn` is equivalent to `U := $e1 V1 | $e2 V2 | ... | $en Vm` if 
+1. `n = m`,
+2. `Si = Vi` for all `1 <= i <= n`. 
+
+Note that `di = ei` does not necessarily hold true for some `1 <= i <= n`.
+
+### Function Types 
+
+A *pure* function type `(F1, F2, ..., Fn) -> O` is equivalent to another pure function type `(E1, E2, ..., Em) -> U` if
+1. `O = U`.
+2. `n = m`.
+3. `Fi = Ei` for all `1 <= i <= n`
+
+### Impure Function Types
+
+1. `@impure(A)` is equivalent to `@impure(B)` if `A = B`. 
+2. `@impure(@impure(A)) = @impure(A)` (Interpreter may also raise static error when taking `@impure` of an already impure function)
+
+
 
 ## Expressions
 
@@ -231,7 +399,7 @@ List list := $rec {1, $rec {2, $rec {3, $emp}}};
 
 ### Function Expressions 
 
-A function expression is an instance of a function type. It takes a possibly empty list of arguments in parentheses, with a `=>` to an expression output.
+A function expression is an instance of a function type. It takes a possibly empty list of arguments in parentheses, with a `=>` to either an expression output, or a block wrapped in curly braces, with the same *block return type* as the function return type.
 
 For example, 
 ```
@@ -263,6 +431,56 @@ Example:
 
 ```
 () => @put('H'), @put('i'); 
+```
+
+### Function to a Block
+
+Functions can go to a single block wrapped in curly braces. This is to help define helper functions and variables.
+
+For example:
+```
+type String := $emp | $rec {Char c, String cs};
+
+String -> String reverse;
+reverse := (s) => {
+  (String, String) -> String helper;
+  helper := (buf, res) => ?buf {
+    $emp    : res;
+    $rec o  : helper(o.cs, $rec {o.c, res});
+  };
+
+  return helper(s, $emp);
+};
+```
+
+Note that only impure functions can have an impure block. Pure functions defining an impure block raises a static error. Depending on the interpreter, impure functions going to a pure block may raise a warning.
+
+### Implicit Recursive Function Operator 
+
+Similar to how `.` can implicitly denote recursive types, we can also make recursively calls within a function using `.`. 
+
+Example:
+
+```
+Int -> Int fac := (a) => a <= 0 ? 1
+                                : a * .(a - 1);
+```
+
+This is equivalent to
+
+```
+Int -> Int fac := (a) => a <= 0 ? 1
+                                : a * fac(a - 1);
+```
+
+Similarly, nested functions can refer to more outer functions by chaining dots.
+
+Example:
+
+```
+Int -> Int contrivedFac := (x) => (
+      (a) => a <= 0 ? 1 : a * ..(a - 1)
+    )(x);
 ```
 
 
@@ -405,14 +623,4 @@ Example usage:
 ```
 @impure(->) charEcho;
 charEcho := () => @put(@get());
-```
-
-The `@string` API is the only function in the language that can take 
-in a string lateral. In particular, it takes a string lateral, and
-returns a `type String := @emp | @rec {Char c, String cs}` type. Note that type-equivalence is structural in SIFLANG, so users may define their own type to store the result of `@string` as long as the structure is identical. 
-
-Example usage:
-```
-type String := @emp | @rec {Char c, String cs};
-String hello = @string("Hello");
 ```
