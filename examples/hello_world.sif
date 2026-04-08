@@ -1,0 +1,13 @@
+type String := $emp 
+             | $rec {Char c, String cs};
+
+@impure(String ->) println;
+println := (s) => ?s {
+    $emp    : @put('\n');
+    $rec o  : {
+        @put(o.c);
+        return println(o.cs);
+    };
+};
+
+println("Hello World!");

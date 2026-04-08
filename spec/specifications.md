@@ -47,7 +47,7 @@ Int myInt;
 
 ## Statements
 
-A statement may either definition of an undeclared variable, a return statement, or executes an impure function with side effects. 
+A statement may either be a definition of an undeclared variable, a return statement, or executes an impure function with side effects. 
 
 ### Assignments
 
@@ -112,7 +112,7 @@ SIFLANG types should be conventionally written in PascalCase.
 
 ### Object Types
 
-Similar to Java records with immutable members, object types can be defined with the following syntax.
+An object type is similar to a C struct, except its members are immutable. 
 
 `type Type = {T1 n1, T2 n2, T3 n3, ..., T4 n4}`
 
@@ -209,11 +209,11 @@ Functions with no inputs are known as producers, functions with no outputs are k
 
 ### Casting Types
 
-Any primitive type can be casted to another primitive type, this is done internally by simply sign-extending, or truncating bits. C-style syntax can be used to perform the cast. For example, 
+Any primitive type can be casted to another primitive type, this is done internally by simply sign-extending, or truncating bits. Casting can be achieved using SIFAPIs corresponding to the resulting type. For example, 
 
 ```
 Long, Int -> Long mult;
-mult := (l, i) => l * (Long) i; 
+mult := (l, i) => l * @long(i); 
 ```
 
 - Casting an `Int a` to `Long l` results in the two's complement representation of `a` being sign-extended to 64-bits to `l`.
@@ -222,7 +222,7 @@ mult := (l, i) => l * (Long) i;
 - Casting a `Float` to `Int` and `Long` is undefined behaviour. 
 - Casting `Char c` to `Int i` or `Long l` is done by returning `c`
 's ASCII representation.
-- Casting from `Void` and `Bool` is undefined.
+- Casting `Int i` to `Char c` is done by truncating `i` to 8-bits.
 
 ### Implicit Recursive Type Operator
 
@@ -427,10 +427,10 @@ This is because we are able to infer the types of `a` and `b` in compile.
 
 An impure function expression can be determined at compile time, it is an impure function only if it makes an impure call. 
 
-Example:
+Example, the following function is impure.
 
 ```
-() => @put('H'), @put('i'); 
+() => @put('H'); 
 ```
 
 ### Function to a Block
@@ -527,7 +527,10 @@ type String := $emp
 @impure(String ->) print;
 print := (s) => ?s {
   $emp   : null;
-  $rec o : @put(o.x), print(o.xs);
+  $rec o : {
+    @put(o.x); 
+    return print(o.xs);
+  };
 };
 
 ```
@@ -569,24 +572,6 @@ Impure functions may call any type of functions, but pure functions may never ca
 that SIFLANG's side effects are not meant for programmers to write imperative code, which means mutable variables
 do not exist in SIFLANG.
 
-### Chaining Impure Operations
-
-Sometimes, we want to call several impure functions just for their side effects. This is done using the `,` expression, we can chain several impure functions together. The return value of this expression is that of the final impure function in the chain. For example, 
-
-```
-@impure((Char, Int) -> Int) printAndRet;
-printAndRet := (c, i) => @put(c), i;
-```
-
-Consider the following example.
-
-```
-@impure(->) printHi;
-printHi := () => @put('H'), @put('i'), @put('!');
-```
-
-Here, the function type requires a `Void` instance, which is always `null`, to be returned. Since `@put` calls have type `Char -> Void`, the expression `@put('!')` evaluates to `null`. 
-
 ## SIFAPI
 
 SIFAPI is a set of natively supported helper calls used to do things pure functions cannot achieve. These calls solves a range of problems, such as handling side effects (I/O). In general, SIFAPIs can be used as normal functions, using the function call operator. SIFAPI calls are those that begin with a `@`, programmers are not allowed to define their own SIFAPIs. This section documents all SIFAPIs. 
@@ -614,7 +599,7 @@ Example usage:
 Example usage:
 ```
 @impure(Char ->) putTwise;
-main := (c) => @put(c), @put(c), @put('\n');
+main := (c) => {@put(c); @put(c); return @put('\n');};
 ```
 
 The `@get` functional API has type `@impure(-> Char)`, it reads a single character from standard in. If nothing is in standard in, it hangs.
@@ -623,4 +608,13 @@ Example usage:
 ```
 @impure(->) charEcho;
 charEcho := () => @put(@get());
+```
+
+The following SIFAPIs can be used to cast between types.
+
+```
+@long
+@int
+@char
+@float
 ```
